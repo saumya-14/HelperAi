@@ -23,21 +23,47 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await pdfRes.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 3️⃣ Dynamically import pdf-parse at runtime (avoids bundling its tests)
-  const { default: parsePdf } = await import('pdf-parse/lib/pdf-parse.js');
-   const { text } = await parsePdf(buffer);
-  const extractedText = text
-      .replace(/\s+/g, ' ')   // turns any whitespace (including newlines) into single spaces
-      .trim();
+    // 3️⃣ Try parsing the PDF with pdf-parse
+    let extractedText = '';
+    try {
+      const { default: parsePdf } = await import('pdf-parse/lib/pdf-parse.js');
+      const { text } = await parsePdf(buffer);
+      extractedText = text.replace(/\s+/g, ' ').trim();
+    } catch (err: any) {
+      if (err.message?.includes('Command token too long')) {
+        return NextResponse.json(
+          {
+            error:
+              'The uploaded PDF is malformed or image-based and cannot be processed. Please upload a clean, text-based PDF.',
+          },
+          { status: 400 }
+        );
+      }
+
+      // Unknown parsing error
+      throw err;
+    }
+
+    if (!extractedText) {
+      return NextResponse.json(
+        { error: 'No readable text found in the PDF.' },
+        { status: 400 }
+      );
+    }
+
     // 4️⃣ Generate AI content from the extracted text
     const geminiResponse = await genAI.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: extractedText,
     });
-    const Text :any = geminiResponse.text;
-    const generatedText = Text
-      .replace(/\s+/g, ' ')   // turns any whitespace (including newlines) into single spaces
+
+    const generatedText = (geminiResponse as any).text
+      ?.replace(/\s+/g, ' ')
       .trim();
+
+    if (!generatedText) {
+      throw new Error('Gemini failed to generate response.');
+    }
 
     // 5️⃣ Translate the generated text via Murf
     const translateRes = await fetch(
@@ -54,8 +80,10 @@ export async function POST(req: NextRequest) {
         }),
       }
     );
+
     const translateData = await translateRes.json();
     const translatedText = translateData.translations?.[0]?.translated_text;
+
     if (!translatedText) {
       throw new Error('Translation failed');
     }
@@ -75,8 +103,10 @@ export async function POST(req: NextRequest) {
         }),
       }
     );
+
     const speechData = await speechRes.json();
     const audioUrl = speechData.audioFile;
+
     if (!audioUrl) {
       throw new Error('Speech generation failed');
     }
