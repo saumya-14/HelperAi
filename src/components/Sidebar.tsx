@@ -6,6 +6,8 @@ import {
   Bell, Settings, Search, Plus, ChevronLeft, ChevronRight, LogOut, User, Sparkles, Menu, X
 } from "lucide-react";
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
+import { SignedOut, SignOutButton } from "@clerk/clerk-react";
 
 const ModernSidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -41,17 +43,14 @@ const ModernSidebar = () => {
 const menuItems = [
   { id: "dashboard", title: "Dashboard", icon: Home, gradient: "from-purple-500 to-pink-500", badge: null, path: "/dashboard" },
   { id: "Chat", title: "Chat", icon: MessageSquare, gradient: "from-cyan-500 to-blue-500", badge: "", path: "/dashboard/chat" },
-  { id: "Chat history", title: "Chat History", icon: MessageSquare, gradient: "from-cyan-500 to-blue-500", badge: "", path: "/chat-history" },
+  { id: "Chat history", title: "Chat History", icon: MessageSquare, gradient: "from-cyan-500 to-blue-500", badge: "", path: "/dashboard/chat-history" },
   { id: "PDF Explainer", title: "PDF Explainer", icon: BarChart3, gradient: "from-blue-500 to-cyan-500", badge: "", path: "/dashboard/pdf-explainer" },
-  { id: "PDF History", title: "PDF History", icon: PenTool, gradient: "from-emerald-500 to-teal-500", badge: "", path: "/pdf-history" },
-  { id: "Video Explainer", title: "Video Explainer", icon: Users, gradient: "from-orange-500 to-red-500", badge: null, path: "/video-explainer" },
-  { id: "Video History", title: "Video History", icon: FileText, gradient: "from-indigo-500 to-purple-500", badge: null, path: "/video-history" },
+  { id: "PDF History", title: "PDF History", icon: PenTool, gradient: "from-emerald-500 to-teal-500", badge: "", path: "/dashboard/pdf-history" },
+  { id: "Video Explainer", title: "Video Explainer", icon: Users, gradient: "from-orange-500 to-red-500", badge: null, path: "/dashboard/video-explainer" },
+  { id: "Video History", title: "Video History", icon: FileText, gradient: "from-indigo-500 to-purple-500", badge: null, path: "/dashboard/video-history" },
 ];
 
-  const bottomItems = [
-    { id: "notifications", title: "Notifications", icon: Bell, gradient: "from-yellow-500 to-orange-500", badge: "5" },
-    { id: "settings", title: "Settings", icon: Settings, gradient: "from-slate-500 to-slate-600", badge: null },
-  ];
+ 
 
   const handleItemClick = (itemId:any) => {
     setActiveItem(itemId);
@@ -169,58 +168,22 @@ const menuItems = [
   })}
 </div>
         {/* Quick Action */}
-        {(!isCollapsed || isMobile) && (
-          <div className="p-4">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-800 to-slate-900 dark:from-purple-700 dark:to-pink-700 text-white font-semibold hover:scale-[1.02] active:scale-[0.98] transition-transform shadow hover:shadow-md">
-              <Plus size={16} />
-              Create New
-            </button>
-          </div>
-        )}
+       
 
-        {/* Bottom Items */}
-        <div className="px-2 py-2 space-y-1 border-t border-gray-200 dark:border-gray-700">
-          {bottomItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={item.id}
-                className="group flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-gray-700 active:scale-98 transition-all"
-              >
-                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center text-white shadow`}>
-                  <Icon className="w-4 h-4" />
-                </div>
-                {(!isCollapsed || isMobile) && (
-                  <div className="flex justify-between items-center flex-1 min-w-0">
-                    <span className="text-slate-700 dark:text-white">{item.title}</span>
-                    {item.badge && (
-                      <span className="text-xs px-2 py-1 bg-white dark:bg-gray-800 text-slate-600 dark:text-gray-300 rounded-full shadow-sm">
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+       
 
         {/* User Profile */}
         <div className={`flex items-center gap-3 p-4 border-t border-gray-200 dark:border-gray-700 ${isCollapsed && !isMobile ? "justify-center" : ""}`}>
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center text-white shadow">
-            <User className="w-5 h-5" />
+          <div className="">
+             <UserButton/>
           </div>
-          {(!isCollapsed || isMobile) && (
-            <>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-slate-800 dark:text-white text-sm truncate">John Doe</p>
-                <p className="text-xs text-slate-500 dark:text-gray-400 truncate">john@workspace.com</p>
-              </div>
-              <button className="hover:bg-slate-100 dark:hover:bg-gray-700 active:scale-95 p-2 rounded text-slate-500 dark:text-gray-400 transition-all">
-                <LogOut className="w-4 h-4" />
-              </button>
-            </>
-          )}
+      
+
+        
+          <SignOutButton/>
+          
+          
+        
         </div>
       </div>
     </>

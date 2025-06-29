@@ -6,6 +6,7 @@ export interface IChat extends Document {
   generatedText: string;
   translatedText: string;
   audioUrl: string;
+  voiceId:string;
   audioCreatedAt: Date;
   createdAt: Date;
 }
@@ -16,6 +17,7 @@ const ChatSchema: Schema = new Schema<IChat>({
   generatedText: { type: String, required: true },
   translatedText: { type: String, required: true },
   audioUrl: { type: String, required: true },
+  voiceId:{type: String, required: true },
   audioCreatedAt: { type: Date, required: true },
 }, { timestamps: { createdAt: 'createdAt', updatedAt: false } });
 

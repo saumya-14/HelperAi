@@ -1,10 +1,43 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { Send, ChevronDown, Globe, User, Bot, Sparkles } from "lucide-react";
+import { Send, ChevronDown, Globe, User, Bot, Sparkles, Volume2 } from "lucide-react";
+
+const destinationLanguages = [
+  { language: "English - US & Canada", locale: "en_US", targetLocale: "en-US", voiceId: "hi-IN-rahul" },
+  { language: "English - UK", locale: "en_UK", targetLocale: "en-UK", voiceId: "en-UK-hazel" },
+  { language: "English - India", locale: "en_IN", targetLocale: "en-IN", voiceId: "hi-IN-rahul" },
+  { language: "English - Scotland", locale: "en_SCOTT", targetLocale: "en-SCOTT", voiceId: "hi-IN-rahul" },
+  { language: "English - Australia", locale: "en_AU", targetLocale: "en-AU", voiceId: "hi-IN-rahul" },
+  { language: "French - France", locale: "fr_FR", targetLocale: "fr-FR", voiceId: "fr-FR-adélie" },
+  { language: "German - Germany", locale: "de_DE", targetLocale: "de-DE", voiceId: "de-DE-josephine" },
+  { language: "Spanish - Spain", locale: "es_ES", targetLocale: "es-ES", voiceId: "hi-IN-rahul" },
+  { language: "Spanish - Mexico", locale: "es_MX", targetLocale: "es-MX", voiceId: "es-MX-alejandro" },
+  { language: "Italian - Italy", locale: "it_IT", targetLocale: "it-IT", voiceId: "it-IT-giorgio" },
+  { language: "Portuguese - Brazil", locale: "pt_BR", targetLocale: "pt-BR", voiceId: "pt-BR-isadora" },
+  { language: "Polish - Poland", locale: "pl_PL", targetLocale: "pl-PL", voiceId: "pl-PL-blazej" },
+  { language: "Hindi - India", locale: "hi_IN", targetLocale: "hi-IN", voiceId: "hi-IN-rahul" },
+  { language: "Korean - Korea", locale: "ko_KR", targetLocale: "ko-KR", voiceId: "ko-KR-hwan" },
+  { language: "Tamil - India", locale: "ta_IN", targetLocale: "ta-IN", voiceId: "ta-IN-sarvesh" },
+  { language: "Bengali - India", locale: "bn_IN", targetLocale: "bn-IN", voiceId: "bn-IN-arnab" },
+  { language: "Japanese - Japan", locale: "ja_JP", targetLocale: "ja-JP", voiceId: "ja-JP-denki" },
+  { language: "Mandarin (Chinese) - China", locale: "zh_CN", targetLocale: "zh-CN", voiceId: "zh-CN-baolin" },
+  { language: "Dutch - Netherlands", locale: "nl_NL", targetLocale: "nl-NL", voiceId: "nl-NL-famke" },
+  { language: "Finnish", locale: "fi_FI", targetLocale: "fi-FI", voiceId: "hi-IN-rahul" },
+  { language: "Russian", locale: "ru_RU", targetLocale: "ru-RU", voiceId: "hi-IN-rahul" },
+  { language: "Turkish", locale: "tr_TR", targetLocale: "tr-TR", voiceId: "hi-IN-rahul" },
+  { language: "Ukrainian", locale: "uk_UA", targetLocale: "uk-UA", voiceId: "hi-IN-rahul" },
+  { language: "Danish", locale: "da_DK", targetLocale: "da-DK", voiceId: "hi-IN-rahul" },
+  { language: "Indonesian", locale: "id_ID", targetLocale: "id-ID", voiceId: "hi-IN-rahul" },
+  { language: "Romanian", locale: "ro_RO", targetLocale: "ro-RO", voiceId: "hi-IN-rahul" },
+  { language: "Norwegian", locale: "nb_NO", targetLocale: "nb-NO", voiceId: "hi-IN-rahul" },
+  { language: "Croatian - Croatia", locale: "hr_HR", targetLocale: "hr-HR", voiceId: "hr-HR-marija" },
+  { language: "Slovak - Slovakia", locale: "sk_SK", targetLocale: "sk-SK", voiceId: "sk-SK-tibor" },
+  { language: "Greek - Greece", locale: "el_GR", targetLocale: "el-GR", voiceId: "el-GR-stavros" },
+];
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState<
-    { id: number; type: string; content: string; timestamp: Date }[]
+    { id: number; type: string; content: string; timestamp: Date; audioUrl?: string }[]
   >([]);
 
   // Initialize with a greeting
@@ -19,38 +52,22 @@ const ChatInterface = () => {
     ]);
   }, []);
 
-  const [languages, setLanguages] = useState<string[]>([]);
-  const [selectedLanguage, setSelectedLanguage] = useState('');
+  // Fixed: Store selected language as object, not string
+  const [selectedLanguage, setSelectedLanguage] = useState<typeof destinationLanguages[0] | null>(null);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Fetch available languages once
-  useEffect(() => {
-    const fetchLanguages = async () => {
-      try {
-        const res = await fetch('/api/voices');
-        const data = await res.json();
-        if (Array.isArray(data.languages) && data.languages.length > 0) {
-          setLanguages(data.languages);
-          setSelectedLanguage(prev => prev || data.languages[0]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch languages:', error);
-        const fallback = ['English', 'Spanish', 'French', 'German', 'Italian'];
-        setLanguages(fallback);
-        setSelectedLanguage(prev => prev || fallback[0]);
-      }
-    };
-    fetchLanguages();
-  }, []);
-
-  const handleLanguageSelect = (language: string) => {
-    setSelectedLanguage(language);
+  // Fixed: Handle language selection properly
+  const handleLanguageSelect = (langObj: typeof destinationLanguages[0]) => {
+    setSelectedLanguage(langObj);
     setIsLanguageDropdownOpen(false);
   };
+
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  useEffect(scrollToBottom, [messages]);
 
   const toggleDropdown = () => {
     setIsLanguageDropdownOpen(open => !open);
@@ -71,34 +88,81 @@ const ChatInterface = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isLanguageDropdownOpen]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-  useEffect(scrollToBottom, [messages]);
-
+  // Fixed: Handle send message with proper null checks
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
-    const newUserMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: inputText,
-      timestamp: new Date(),
+
+    // Check if language is selected
+    if (!selectedLanguage) {
+      alert("Please select a language first!");
+      return;
+    }
+
+    const newUserMessage = { 
+      id: Date.now(), 
+      type: "user", 
+      content: inputText, 
+      timestamp: new Date() 
     };
-    setMessages(prev => [...prev, newUserMessage]);
-    setInputText('');
+    
+    setMessages((m) => [...m, newUserMessage]);
+    setInputText("");
     setIsTyping(true);
 
-    // Mock bot response
-    setTimeout(() => {
-      const botResponse = {
-        id: Date.now() + 1,
-        type: 'bot',
-        content: `I understand you're communicating in ${selectedLanguage}. Here's my response to: "${newUserMessage.content}".`,
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: newUserMessage.content,
+          targetLanguage: selectedLanguage.targetLocale,
+          voiceId: selectedLanguage.voiceId,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`API Error: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      const botContent = `🎧 ${selectedLanguage.language}: ${data.translated || data.original}`;
+      const botMessage = { 
+        id: Date.now() + 1, 
+        type: "bot", 
+        content: botContent, 
         timestamp: new Date(),
+        audioUrl: data.audio || undefined
       };
-      setMessages(prev => [...prev, botResponse]);
+      
+      setMessages((m) => [...m, botMessage]);
       setIsTyping(false);
-    }, 1500);
+
+      // Save chat
+      await fetch("/api/save-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: newUserMessage.content,
+          generatedText: data.original,
+          translatedText: data.translated,
+          voiceId: selectedLanguage.voiceId,
+          audioUrl: data.audio,
+        }),
+      });
+    } catch (err) {
+      console.error("Error sending message:", err);
+      setMessages((m) => [
+        ...m,
+        { 
+          id: Date.now() + 2, 
+          type: "bot", 
+          content: "Sorry, something went wrong. Please try again. 😞", 
+          timestamp: new Date() 
+        },
+      ]);
+      setIsTyping(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -116,6 +180,15 @@ const ChatInterface = () => {
     }
   };
   useEffect(adjustTextareaHeight, [inputText]);
+
+  // Fixed: Play audio function
+  const playAudio = (audioUrl: string) => {
+    const audio = new Audio(audioUrl);
+    audio.play().catch(err => {
+      console.error("Error playing audio:", err);
+      alert("Failed to play audio. The audio file might not be available.");
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex flex-col" suppressHydrationWarning>
@@ -142,7 +215,7 @@ const ChatInterface = () => {
             >
               <Globe className="w-5 h-5 text-slate-600" />
               <span className="text-sm text-slate-700">
-                {selectedLanguage || 'Select Language'}
+                {selectedLanguage?.language || 'Select Language'}
               </span>
               <ChevronDown
                 className={`w-5 h-5 text-slate-500 transform transition-transform ${
@@ -151,16 +224,16 @@ const ChatInterface = () => {
               />
             </button>
             {isLanguageDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
-                {languages.map((lang, idx) => (
+              <div className="absolute right-0 mt-2 w-64 bg-white border rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+                {destinationLanguages.map((lang, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleLanguageSelect(lang)}
                     className={`w-full px-4 py-2 text-sm text-left hover:bg-purple-50 transition-colors ${
-                      selectedLanguage === lang ? 'bg-purple-100 font-medium text-purple-700' : 'text-slate-700'
+                      selectedLanguage?.language === lang.language ? 'bg-purple-100 font-medium text-purple-700' : 'text-slate-700'
                     }`}
                   >
-                    {lang}
+                    {lang.language}
                   </button>
                 ))}
               </div>
@@ -188,15 +261,27 @@ const ChatInterface = () => {
                 }`}
               >
                 <p className="whitespace-pre-wrap">{msg.content}</p>
-                <p className="text-xs mt-2 text-right">
+                <p className="text-xs mt-2 text-right opacity-70">
                   {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
+
+                {/* Fixed: Audio button for bot messages */}
+                {msg.type === 'bot' && msg.audioUrl && (
+                  <button
+                    onClick={() => playAudio(msg.audioUrl!)}
+                    className="mt-2 flex items-center gap-1 text-purple-600 hover:text-purple-800 transition text-sm"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    <span>Play Audio</span>
+                  </button>
+                )}
               </div>
               {msg.type === 'user' && (
                 <User className="w-8 h-8 text-cyan-600" />
               )}
             </div>
           ))}
+
           {isTyping && (
             <div className="flex items-center gap-3">
               <Bot className="w-8 h-8 text-pink-600" />
@@ -220,14 +305,14 @@ const ChatInterface = () => {
               value={inputText}
               onChange={e => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={`Type your message${selectedLanguage ? ` in ${selectedLanguage}` : ''}...`}
+              placeholder={`Type your message${selectedLanguage ? ` (will be translated to ${selectedLanguage.language})` : ''}...`}
               className="flex-1 resize-none outline-none bg-transparent text-slate-800 placeholder-slate-500 text-base min-h-[20px] max-h-[120px]"
               rows={1}
             />
             <button
               onClick={handleSendMessage}
-              disabled={!inputText.trim()}
-              className="p-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 disabled:opacity-50"
+              disabled={!inputText.trim() || !selectedLanguage}
+              className="p-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-5 h-5" />
             </button>
@@ -235,7 +320,7 @@ const ChatInterface = () => {
           <p className="text-xs text-slate-500 text-center mt-2">
             <span className="hidden sm:inline">Press Enter to send, Shift+Enter for newline • </span>
             <span className="sm:hidden">Tap send • </span>
-            Language: {selectedLanguage || 'None'}
+            Language: {selectedLanguage?.language || 'None selected'}
           </p>
         </div>
       </footer>

@@ -1,4 +1,3 @@
-// app/api/voices/route.ts
 import { NextResponse } from 'next/server';
 
 export async function GET() {
@@ -12,12 +11,10 @@ export async function GET() {
 
   try {
     const response = await fetch(url, options);
-    
-    // Check if the HTTP request was successful
+
     if (!response.ok) {
-      console.error('Murf API HTTP error:', response.status, response.statusText);
       const errorText = await response.text();
-      console.error('Error response body:', errorText);
+      console.error('Murf API HTTP error:', response.status, response.statusText);
       return NextResponse.json(
         { error: `Murf API error: ${response.status} ${response.statusText}` },
         { status: response.status }
@@ -26,78 +23,84 @@ export async function GET() {
 
     const data = await response.json();
 
-    // Debug log to see actual response structure
-    console.log('Murf API response:', JSON.stringify(data, null, 2));
+    let voices: any[] = [];
 
-    // Check if the response has the expected structure
-    if (!data || typeof data !== 'object') {
-      console.error('Invalid response format - not an object:', typeof data);
-      return NextResponse.json(
-        { error: 'Invalid response format from Murf API' },
-        { status: 500 }
-      );
-    }
-
-    // Handle different possible response structures
-    let voices = [];
-    
-    if (data.voices && Array.isArray(data.voices)) {
-      voices = data.voices;
-    } else if (Array.isArray(data)) {
-      // In case the API returns voices directly as an array
+    if (Array.isArray(data)) {
       voices = data;
-    } else if (data.data && Array.isArray(data.data)) {
-      // In case voices are nested in a 'data' property
+    } else if (Array.isArray(data.voices)) {
+      voices = data.voices;
+    } else if (Array.isArray(data.data)) {
       voices = data.data;
     } else {
-      console.error('No voices array found in response. Response structure:', Object.keys(data));
       return NextResponse.json(
-        { error: 'No voices data found in API response', responseKeys: Object.keys(data) },
+        { error: 'Unexpected response format', structure: Object.keys(data) },
         { status: 500 }
       );
     }
 
-    if (voices.length === 0) {
-      console.warn('No voices returned from API');
-      return NextResponse.json({ languages: [] });
+    const languageToLocalesMap: Record<string, Set<string>> = {};
+    const languageToVoiceIdsMap: Record<string, string[]> = {};
+    const displayLanguages = new Set<string>();
+
+    voices.forEach((voice) => {
+      const language = voice.displayLanguage;
+      if (!language) return;
+
+      displayLanguages.add(language);
+
+      // Add voice ID to corresponding language
+      if (!languageToVoiceIdsMap[language]) {
+        languageToVoiceIdsMap[language] = [];
+      }
+      if (voice.voiceId) {
+        languageToVoiceIdsMap[language].push(voice.voiceId);
+      }
+
+      // Add locales
+      if (!languageToLocalesMap[language]) {
+        languageToLocalesMap[language] = new Set();
+      }
+      const supportedLocales = voice.supportedLocales || {};
+      Object.keys(supportedLocales).forEach((locale) => {
+        languageToLocalesMap[language].add(locale);
+      });
+    });
+
+    // Convert Set to Array
+    const mappedLocales: Record<string, string[]> = {};
+    for (const [language, localesSet] of Object.entries(languageToLocalesMap)) {
+      mappedLocales[language] = Array.from(localesSet);
     }
+    const firstVoiceIds = Object.entries(languageToVoiceIdsMap).map(([language, voiceIds]) => ({
+  language,
+  voiceId: voiceIds[0]  // get the first voice ID
+}));
+const firstLocales = Object.entries(mappedLocales).map(
+  ([language, locales]) => ({
+    language,
+    locale: locales[0] || null
+  })
+);
 
-    // Extract unique display languages
-    const displayLanguages = [
-      ...new Set(
-        voices
-          .map((voice: any) => voice.displayLanguage || voice.language || voice.lang)
-          .filter(Boolean) // Remove any undefined/null values
-      ),
-    ];
+   console.log({
+  languages: Array.from(displayLanguages),
+  languageToLocalesMap: firstLocales,
+  languageToVoiceIdsMap:firstVoiceIds,
+  totalVoices: voices.length,
+});
 
-    console.log('Extracted languages:', displayLanguages);
-
-    return NextResponse.json({ 
-      languages: displayLanguages,
-      totalVoices: voices.length 
+    return NextResponse.json({
+      languages: Array.from(displayLanguages),
+  languageToLocalesMap: firstLocales,
+      
+      languageToVoiceIdsMap: firstVoiceIds,
+      totalVoices: voices.length,
     });
 
   } catch (error) {
     console.error('Error fetching Murf voices:', error);
-    
-    // Provide more specific error information
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { error: 'Invalid JSON response from Murf API' },
-        { status: 500 }
-      );
-    }
-    
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return NextResponse.json(
-        { error: 'Network error connecting to Murf API' },
-        { status: 503 }
-      );
-    }
-
     return NextResponse.json(
-      { error: 'Internal server error', details: error},
+      { error: 'Internal Server Error', details: error },
       { status: 500 }
     );
   }

@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     // Step 1: Generate AI content
     const geminiResponse = await genAI.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: prompt,
+      contents: `${prompt} in one paragraph`,
     });
     const generatedText = geminiResponse.text;
     console.log("Generated:", generatedText);

@@ -5,6 +5,9 @@ export interface IPDF extends Document {
   pdfUrl: string;
   generatedText: string;
   translatedText: string;
+  targetlanguage:string;
+  translatedlanguage:string;
+  voiceId:string;
   audioUrl: string;
   audioCreatedAt: Date;
   createdAt: Date;
@@ -16,6 +19,10 @@ const PDFSchema: Schema = new Schema<IPDF>(
     pdfUrl: { type: String, required: true },
     generatedText: { type: String, required: true },
     translatedText: { type: String, required: true },
+   targetlanguage:{type:String,required:true},
+  translatedlanguage:{ type: String, required: true},
+  voiceId:{type: String, required: true},
+
     audioUrl: { type: String, required: true },
     audioCreatedAt: { type: Date, required: true },
   },

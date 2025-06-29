@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       model: 'gemini-2.5-flash',
       contents: extractedText,
     });
-    const Text = geminiResponse.text;
+    const Text :any = geminiResponse.text;
     const generatedText = Text
       .replace(/\s+/g, ' ')   // turns any whitespace (including newlines) into single spaces
       .trim();
