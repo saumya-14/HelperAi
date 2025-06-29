@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
     // 3️⃣ Try parsing the PDF with pdf-parse
     let extractedText = '';
     try {
-    const parsePdf = (await import('pdf-parse')).default;
+  const parsePdf = (await import('pdf-parse/lib/pdf-parse.js')).default;
+
 
       const { text } = await parsePdf(buffer);
       extractedText = text.replace(/\s+/g, ' ').trim();
